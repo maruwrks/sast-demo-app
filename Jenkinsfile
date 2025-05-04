@@ -8,11 +8,14 @@ pipeline {
             }
         }
         
-        stage('Install Bandit') {
+        stage('Setup Environment') {
             steps {
                 sh '''
-                    # Install bandit secara global
-                    pip3 install --user bandit || python3 -m pip install --user bandit
+                    sudo apt-get update
+                    sudo apt-get install -y python3 python3-venv
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install bandit
                 '''
             }
         }
@@ -20,21 +23,13 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh '''
-                    # Jalankan bandit langsung
+                    . venv/bin/activate
                     bandit -f xml -o bandit-output.xml -r . || true
-                    
-                    # Alternatif jika bandit command tidak ditemukan
-                    python3 -m bandit -f xml -o bandit-output.xml -r . || true
                 '''
-                
-                // Untuk memproses hasil scan (butuh Warnings NG plugin)
                 recordIssues(
                     tools: [banditParser(pattern: 'bandit-output.xml')],
                     qualityGates: [[threshold: 1, type: 'TOTAL_HIGH', unstable: true]]
                 )
-                
-                // Alternatif sederhana jika hanya ingin menyimpan hasil
-                archiveArtifacts artifacts: 'bandit-output.xml', allowEmptyArchive: true
             }
         }
     }
