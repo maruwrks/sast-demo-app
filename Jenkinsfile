@@ -1,19 +1,23 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.9-slim'
-            args '--user root'
-        }
-    }
-    
+    agent any
+
     stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/maruwrks/sast-demo-app.git', branch: 'master'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install bandit'
+            }
+        }
+
         stage('SAST Analysis') {
             steps {
-                sh '''
-                    pip install bandit
-                    bandit -f xml -o bandit-output.xml -r . || true
-                '''
-                archiveArtifacts artifacts: 'bandit-output.xml'
+                sh 'bandit -f xml -o bandit-output.xml -r . || true'
+                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
             }
         }
     }
