@@ -10,7 +10,7 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh 'bandit -f xml -o bandit-output.xml -r . || true'
-                recordIssues tools: [paylint(pattern: 'bandit-output.xml')]
+                recordIssues tools: [pylint(pattern: 'bandit-output.xml')]
             }
         }
     }
