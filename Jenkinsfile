@@ -9,13 +9,17 @@ pipeline {
         }
         stage('Install Dependencies') {
             steps {
-                sh 'python3 -m venv venv'  // Membuat virtual environment
-                sh 'source venv/bin/activate && pip install bandit'  // Instal bandit di venv
+                // Membuat virtual environment di dalam workspace Jenkins
+                sh 'python3 -m venv venv'  
+                
+                // Mengaktifkan virtual environment dan menginstal bandit
+                sh 'source venv/bin/activate && pip install bandit'
             }
         }
         stage('SAST Analysis') {
             steps {
-                sh 'source venv/bin/activate && bandit -f xml -o bandit-output.xml -r . || true'  // Jalankan bandit di venv
+                // Mengaktifkan virtual environment dan menjalankan analisis Bandit
+                sh 'source venv/bin/activate && bandit -f xml -o bandit-output.xml -r . || true'
                 recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
             }
         }
