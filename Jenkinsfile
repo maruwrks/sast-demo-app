@@ -7,16 +7,6 @@ pipeline {
                 git url: 'https://github.com/maruwrks/sast-demo-app.git', branch: 'master'
             }
         }
-
-        stage('Install Bandit') {
-            steps {
-                sh '''
-                    python3 -m pip install --upgrade pip
-                    pip install bandit
-                '''
-            }
-        }
-
         stage('SAST Analysis') {
             steps {
                 sh '''
