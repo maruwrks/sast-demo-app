@@ -19,7 +19,7 @@ pipeline {
         stage('Process Results') {
             steps {
                 recordIssues(
-                    tools: [bandit(pattern: 'bandit-output.xml')],
+                    tools: [issues(pattern: 'bandit-output.xml', name: 'Bandit', type: 'bandit')],
                     qualityGates: [
                         [threshold: 1, type: 'TOTAL_HIGH', unstable: true],
                         [threshold: 1, type: 'TOTAL_ERROR', unstable: true]
