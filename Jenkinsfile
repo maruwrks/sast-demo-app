@@ -9,7 +9,10 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh 'bandit -f xml -o bandit-output.xml -r . || true'
-                sh 'cat bandit-output.xml' // Menampilkan hasil bandit untuk pemeriksaan
+                recordIssues(
+                    tools: [bandit(pattern: 'bandit-output.xml')]
+                    ]
+                )
             }
         }
     }
