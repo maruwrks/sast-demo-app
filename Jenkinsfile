@@ -26,7 +26,7 @@ pipeline {
                     bandit -f xml -o bandit-output.xml -r . || true
                 '''
                 recordIssues(
-                    tools: [bandit(pattern: 'bandit-output.xml')]
+                    tool: issues(name: 'Bandit', pattern: 'bandit-output.xml', reportEncoding: 'UTF-8')
                 )
                 archiveArtifacts artifacts: 'bandit-output.xml', fingerprint: true
             }
