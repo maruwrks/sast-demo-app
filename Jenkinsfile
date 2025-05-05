@@ -1,17 +1,23 @@
 pipeline {
     agent any
 
+    environment {
+        VENV_DIR = 'venv'
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/maruwrks/sast-demo-app.git', branch: 'master'
+                git url: 'https://github.com/athabrani/sast-demo-app.git', branch: 'main'
             }
         }
 
-        stage('Install Bandit') {
+        stage('Setup Virtualenv') {
             steps {
                 sh '''
-                    python3 -m pip install --upgrade pip
+                    python3 -m venv $VENV_DIR
+                    . $VENV_DIR/bin/activate
+                    pip install --upgrade pip
                     pip install bandit
                 '''
             }
@@ -20,22 +26,17 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh '''
-                    bandit -f xml -o bandit-output.xml -r . || true
+                    . $VENV_DIR/bin/activate
+                    bandit -r . -f xml -o bandit-output.xml || echo "Bandit finished with issues"
+                    bandit -r . -f txt || echo "Bandit text output"
                 '''
-                recordIssues(
-                    tools: [bandit(pattern: 'bandit-output.xml')]
-                )
-                archiveArtifacts artifacts: 'bandit-output.xml', fingerprint: true
             }
         }
-    }
 
-    post {
-        always {
-            echo 'Pipeline finished.'
-        }
-        failure {
-            echo 'Pipeline failed.'
+        stage('Archive Report') {
+            steps {
+                archiveArtifacts artifacts: 'bandit-output.xml', fingerprint: true
+            }
         }
     }
 }
