@@ -11,12 +11,12 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh '''
-                    bandit -f sarif -o bandit-output.sarif -r . || true
-                    echo "--- SARIF Output ---"
-                    cat bandit-output.sarif || echo "SARIF not found!"
+                    bandit -f xml -o bandit-output.xml -r . || true
+                    echo "--- XML Output ---"
+                    cat bandit-output.xml || echo "XML not found!"
                     ls -lah
                 '''
-                recordIssues tools: [sarif(pattern: 'bandit-output.sarif')]
+                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
             }
         }
     }
