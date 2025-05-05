@@ -10,7 +10,7 @@ pipeline {
             steps {
                 sh 'bandit -f xml -o bandit-output.xml -r . || true'
                 recordIssues(
-                    tools: [banditParser(pattern: 'bandit-output.xml')]
+                    tools: [bandit(pattern: 'bandit-output.xml')]
                 )
             }
         }
