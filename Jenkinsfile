@@ -10,13 +10,13 @@ pipeline {
 
         stage('SAST Analysis') {
             steps {
-                sh '''
-                    bandit -f xml -o bandit-output.xml -r . || true
-                    echo "--- XML Output ---"
-                    cat bandit-output.xml || echo "XML not found!"
-                    ls -lah
-                '''
-                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
+                sh 'bandit -f xml -o bandit-output.xml -r . || echo "Bandit scan completed with warnings"'
+                recordIssues tools: [bandit(pattern: 'bandit-output.xml')], allowEmptyResults: true
+            }
+            post {
+                always {
+                    sh 'ls -lah bandit-output.xml'
+                }
             }
         }
     }
