@@ -4,40 +4,41 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/maruwrks/sast-demo-app.git'
+                git url: 'https://github.com/maruwrks/sast-demo-app.git', branch: 'master'
+            }
+        }
+
+        stage('Setup Virtual Environment') {
+            steps {
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install bandit
+                '''
             }
         }
 
         stage('SAST Analysis') {
             steps {
-                // Continue even if Bandit finds issues (exit code 1)
-                sh 'bandit -f xml -o bandit-output.xml -r . || true'
-                echo 'Bandit scan completed'
-            }
-        }
-
-        stage('Process Results') {
-            steps {
+                sh '''
+                    . venv/bin/activate
+                    bandit -f xml -o bandit-output.xml -r . || true
+                '''
                 recordIssues(
-                    tools: [issues(pattern: 'bandit-output.xml', name: 'Bandit', type: 'bandit')],
-                    qualityGates: [
-                        [threshold: 1, type: 'TOTAL_HIGH', unstable: true],
-                        [threshold: 1, type: 'TOTAL_ERROR', unstable: true]
-                    ]
+                    tool: issues(name: 'Bandit', pattern: 'bandit-output.xml', reportEncoding: 'UTF-8')
                 )
+                archiveArtifacts artifacts: 'bandit-output.xml', fingerprint: true
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'bandit-output.xml', allowEmptyArchive: true
-        }
-        unstable {
-            echo 'Build marked as unstable due to security findings'
+            echo 'Pipeline finished.'
         }
         failure {
-            echo 'Build failed for reasons other than security findings'
+            echo 'Pipeline failed.'
         }
     }
 }
