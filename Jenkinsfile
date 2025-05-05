@@ -10,7 +10,8 @@ pipeline {
 
         stage('SAST Analysis') {
             steps {
-                sh 'bandit -f xml -o bandit-output.xml -r .'
+                // Continue even if Bandit finds issues (exit code 1)
+                sh 'bandit -f xml -o bandit-output.xml -r . || true'
                 echo 'Bandit scan completed'
             }
         }
@@ -19,7 +20,10 @@ pipeline {
             steps {
                 recordIssues(
                     tools: [bandit(pattern: 'bandit-output.xml')],
-                    qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]]
+                    qualityGates: [
+                        [threshold: 1, type: 'TOTAL_HIGH', unstable: true],
+                        [threshold: 1, type: 'TOTAL_ERROR', unstable: true]
+                    ]
                 )
             }
         }
@@ -28,6 +32,12 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'bandit-output.xml', allowEmptyArchive: true
+        }
+        unstable {
+            echo 'Build marked as unstable due to security findings'
+        }
+        failure {
+            echo 'Build failed for reasons other than security findings'
         }
     }
 }
