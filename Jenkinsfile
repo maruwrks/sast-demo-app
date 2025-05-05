@@ -4,20 +4,30 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/maruwrks/sast-demo-app.git', branch: 'master'
+                git 'https://github.com/maruwrks/sast-demo-app.git'
             }
         }
 
         stage('SAST Analysis') {
             steps {
-                sh 'bandit -f xml -o bandit-output.xml -r . || echo "Bandit scan completed with warnings"'
-                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
+                sh 'bandit -f xml -o bandit-output.xml -r .'
+                echo 'Bandit scan completed'
             }
-            post {
-                always {
-                    sh 'ls -lah bandit-output.xml'
-                }
+        }
+
+        stage('Process Results') {
+            steps {
+                recordIssues(
+                    tools: [bandit(pattern: 'bandit-output.xml')],
+                    qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]]
+                )
             }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'bandit-output.xml', allowEmptyArchive: true
         }
     }
 }
