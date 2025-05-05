@@ -7,20 +7,29 @@ pipeline {
                 git url: 'https://github.com/maruwrks/sast-demo-app.git', branch: 'master'
             }
         }
+
         stage('Install Dependencies') {
             steps {
-                // Membuat virtual environment di dalam workspace Jenkins
-                sh 'python3 -m venv venv'
-                
-                // Mengaktifkan virtual environment dan menginstal bandit dengan menggunakan perintah . (dot)
-                sh '. venv/bin/activate && pip install bandit'
+                // Membuat dan mengaktifkan virtual environment, lalu install Bandit
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install bandit
+                '''
             }
         }
+
         stage('SAST Analysis') {
             steps {
-                // Mengaktifkan virtual environment dan menjalankan analisis Bandit
-                sh '. venv/bin/activate && bandit -f xml -o bandit-output.xml -r . || true'
-                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
+                // Jalankan Bandit dengan output SARIF (untuk kompatibilitas dengan Jenkins)
+                sh '''
+                    . venv/bin/activate
+                    bandit -f sarif -o bandit-output.sarif -r . || true
+                '''
+
+                // Rekam hasil analisis Bandit menggunakan SARIF parser
+                recordIssues tools: [sarif(pattern: 'bandit-output.sarif')]
             }
         }
     }
