@@ -11,7 +11,7 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh 'bandit -f xml -o bandit-output.xml -r . || echo "Bandit scan completed with warnings"'
-                recordIssues tools: [bandit(pattern: 'bandit-output.xml')], allowEmptyResults: true
+                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
             }
             post {
                 always {
