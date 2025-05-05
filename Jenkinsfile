@@ -3,13 +3,13 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/maruwrks/sast-demo-app.git', branch: 'master'
+                git url: 'https://github.com/your-username/sast-demo-app.git', branch: 'master'
             }
         }
         stage('SAST Analysis') {
             steps {
                 sh 'bandit -f xml -o bandit-output.xml -r . || true'
-                recordIssues tool: bandit(pattern: 'bandit-output.xml')
+                sh 'cat bandit-output.xml' // Menampilkan hasil bandit untuk pemeriksaan
             }
         }
     }
