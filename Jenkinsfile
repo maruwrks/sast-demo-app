@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = 'venv'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -12,12 +8,10 @@ pipeline {
             }
         }
 
-        stage('Setup Virtualenv') {
+        stage('Install Bandit') {
             steps {
                 sh '''
-                    python3 -m venv $VENV_DIR
-                    . $VENV_DIR/bin/activate
-                    pip install --upgrade pip
+                    python3 -m pip install --upgrade pip
                     pip install bandit
                 '''
             }
@@ -26,17 +20,22 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh '''
-                    . $VENV_DIR/bin/activate
-                    bandit -r . -f xml -o bandit-output.xml || echo "Bandit finished with issues"
-                    bandit -r . -f txt || echo "Bandit text output"
+                    bandit -f xml -o bandit-output.xml -r . || true
                 '''
-            }
-        }
-
-        stage('Archive Report') {
-            steps {
+                recordIssues(
+                    tools: [bandit(pattern: 'bandit-output.xml')]
+                )
                 archiveArtifacts artifacts: 'bandit-output.xml', fingerprint: true
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished.'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
