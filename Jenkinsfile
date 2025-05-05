@@ -8,27 +8,14 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                // Membuat dan mengaktifkan virtual environment, lalu install Bandit
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install bandit
-                '''
-            }
-        }
-
         stage('SAST Analysis') {
             steps {
-                // Jalankan Bandit dengan output SARIF (untuk kompatibilitas dengan Jenkins)
                 sh '''
-                    . venv/bin/activate
                     bandit -f sarif -o bandit-output.sarif -r . || true
+                    echo "--- SARIF Output ---"
+                    cat bandit-output.sarif || echo "SARIF not found!"
+                    ls -lah
                 '''
-
-                // Rekam hasil analisis Bandit menggunakan SARIF parser
                 recordIssues tools: [sarif(pattern: 'bandit-output.sarif')]
             }
         }
